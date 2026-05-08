@@ -442,7 +442,11 @@
 
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { displaySurface: 'monitor', frameRate: 10 },
+        video: {
+          displaySurface: 'monitor',
+          frameRate: 10,
+          height: { ideal: 480 },
+        },
         audio: false
       });
 
