@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verifica — I.T.I. Marconi Bari</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff4d6d;
+    --green: #00e676;
+    --yellow: #ffd600;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(0,212,255,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,77,109,0.05) 0%, transparent 50%);
+  }
+
+  .header { text-align: center; margin-bottom: 2.5rem; }
+
+  .school-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  h1 span { color: var(--text); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .form-group { margin-bottom: 1.2rem; }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+  }
+
+  input, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.65rem 0.9rem;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,212,255,0.1);
+  }
+
+  select option { background: var(--surface); }
+
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+    min-height: 52px;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+
+  .dot.idle      { background: var(--text-dim); }
+  .dot.rec       { background: var(--accent2); box-shadow: 0 0 10px var(--accent2); animation: pulse 1.2s ease-in-out infinite; }
+  .dot.uploading { background: var(--accent);  box-shadow: 0 0 8px var(--accent);  animation: pulse 0.8s ease-in-out infinite; }
+  .dot.done      { background: var(--green);   box-shadow: 0 0 8px var(--green); }
+  .dot.error     { background: var(--accent2); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .status-text { font-family: var(--mono); font-size: 0.8rem; color: var(--text); flex: 1; }
+  .status-time { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); }
+
+  /* Chunk log */
+  .chunk-log {
+    display: none;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    max-height: 90px;
+    overflow-y: auto;
+  }
+
+  .chunk-log.visible { display: block; }
+  .chunk-log .ok  { color: var(--green); }
+  .chunk-log .err { color: var(--accent2); }
+
+  /* Progress */
+  .progress-wrap { display: none; margin-bottom: 1rem; }
+  .progress-wrap.visible { display: block; }
+
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    width: 0%;
+    transition: width 0.4s;
+    border-radius: 2px;
+  }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    padding: 0.85rem;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 0.75rem;
+  }
+
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-start { background: var(--accent); color: var(--bg); }
+  .btn-start:hover:not(:disabled) {
+    background: #33ddff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+  }
+
+  .btn-stop { background: transparent; color: var(--accent2); border: 1px solid var(--accent2); }
+  .btn-stop:hover:not(:disabled) { background: rgba(255,77,109,0.1); }
+
+  .warning {
+    background: rgba(255,214,0,0.07);
+    border: 1px solid rgba(255,214,0,0.2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    color: var(--yellow);
+    font-family: var(--mono);
+    line-height: 1.5;
+    margin-top: 1rem;
+  }
+
+  .warning strong { display: block; margin-bottom: 0.25rem; }
+
+  .footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .row { display: flex; gap: 1rem; }
+  .row .form-group { flex: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="school-label">I.T.I. Guglielmo Marconi — Bari</div>
+  <h1>VERIFICA <span>// PROCTORING</span></h1>
+</div>
+
+<div class="card">
+  <div class="section-title">// 01 — dati studente</div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>COGNOME</label>
+      <input type="text" id="cognome" placeholder="es. Rossi" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>NOME</label>
+      <input type="text" id="nome" placeholder="es. Mario" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>CLASSE</label>
+      <select id="classe">
+        <option value="">— seleziona —</option>
+        <option value="4IC">4IC</option>
+        <option value="4ID">4ID</option>
+        <option value="5IC">5IC</option>
+        <option value="4SE">4SE</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>VERIFICA</label>
+      <input type="text" id="verifica" placeholder="es. Reti-Cap3" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-title">// 02 — registrazione schermo</div>
+
+  <div class="status-bar">
+    <div class="dot idle" id="dot"></div>
+    <div class="status-text" id="statusText">In attesa — inserisci i dati e avvia</div>
+    <div class="status-time" id="statusTime"></div>
+  </div>
+
+  <div class="chunk-log" id="chunkLog"></div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label">
+      <span>Chunk inviati su Drive</span>
+      <span id="progressPct">—</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-start" id="btnStart" onclick="avviaRegistrazione()">
+    ▶ AVVIA REGISTRAZIONE SCHERMO
+  </button>
+  <button class="btn btn-stop" id="btnStop" onclick="fermaRegistrazione()" disabled>
+    ■ TERMINA E INVIA ULTIMO CHUNK
+  </button>
+
+  <div class="warning">
+    <strong>⚠ ATTENZIONE</strong>
+    Non chiudere questa scheda durante la verifica.<br>
+    I chunk vengono salvati su Drive ogni 30 secondi automaticamente.
+  </div>
+</div>
+
+<div class="footer">Proctoring System v1.1 — Prof. Vacca &nbsp;·&nbsp; nicola.vacca@marconibari.edu.it</div>
+
+<script>
+  const APPS_SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbzE7awoNqHDC_WFprOFxAqgmRiAjyQ7N69R5NA2_Ap0I9CFkeeOyxjKaT-cqTiufQ/exec';
+  const CHUNK_INTERVAL_MS = 30000; // un chunk ogni 30 secondi
+
+  let mediaRecorder = null;
+  let timerInterval = null;
+  let secondi       = 0;
+  let chunkIndex    = 0;
+  let chunkSent     = 0;
+  let sessionId     = null;
+  let datiStudente  = null;
+  let uploadQueue   = Promise.resolve(); // serializza gli upload
+
+  // ── UI ──────────────────────────────────────────────────────
+
+  function setStatus(tipo, msg) {
+    document.getElementById('dot').className = 'dot ' + tipo;
+    document.getElementById('statusText').textContent = msg;
+  }
+
+  function logChunk(idx, ok, note) {
+    const log = document.getElementById('chunkLog');
+    log.classList.add('visible');
+    const line = document.createElement('div');
+    line.className = ok ? 'ok' : 'err';
+    const ora = new Date().toLocaleTimeString('it-IT');
+    line.textContent = `[${ora}] chunk_${String(idx).padStart(3,'0')} — ${ok ? '✓ inviato' : '✗ errore'} ${note || ''}`;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function updateProgress(sent, total) {
+    document.getElementById('progressWrap').classList.add('visible');
+    document.getElementById('progressPct').textContent = `${sent} / ${total}`;
+    const pct = total > 0 ? Math.min(90, Math.round((sent / total) * 90)) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+  }
+
+  function avviaTimer() {
+    secondi = 0;
+    timerInterval = setInterval(() => {
+      secondi++;
+      document.getElementById('statusTime').textContent = formatTime(secondi);
+    }, 1000);
+  }
+
+  function fermaTimer() { clearInterval(timerInterval); }
+
+  function formatTime(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+
+  // ── Form ────────────────────────────────────────────────────
+
+  function validaForm() {
+    const cognome  = document.getElementById('cognome').value.trim();
+    const nome     = document.getElementById('nome').value.trim();
+    const classe   = document.getElementById('classe').value;
+    const verifica = document.getElementById('verifica').value.trim();
+    if (!cognome || !nome || !classe || !verifica) {
+      alert('Compila tutti i campi prima di avviare la registrazione.');
+      return null;
+    }
+    return { cognome, nome, classe, verifica };
+  }
+
+  // ── Upload ───────────────────────────────────────────────────
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve(r.result.split(',')[1]);
+      r.onerror   = reject;
+      r.readAsDataURL(blob);
+    });
+  }
+
+  async function inviaChunk(blob, index) {
+    const base64 = await blobToBase64(blob);
+    const meta = JSON.stringify({
+      cognome:    datiStudente.cognome,
+      nome:       datiStudente.nome,
+      classe:     datiStudente.classe,
+      verifica:   datiStudente.verifica,
+      sessionId:  sessionId,
+      chunkIndex: index
+    });
+    await fetch(APPS_SCRIPT_URL, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify({ meta, video: base64 })
+    });
+  }
+
+  function accodaChunk(blob, index) {
+    uploadQueue = uploadQueue.then(async () => {
+      try {
+        await inviaChunk(blob, index);
+        chunkSent++;
+        logChunk(index, true);
+        updateProgress(chunkSent, chunkIndex);
+        setStatus('rec', `⏺ Registrazione — chunk ${index} inviato ✓`);
+      } catch (err) {
+        logChunk(index, false, err.message);
+        // Un solo retry
+        try {
+          await inviaChunk(blob, index);
+          chunkSent++;
+          logChunk(index, true, '(retry OK)');
+          updateProgress(chunkSent, chunkIndex);
+        } catch (e) {
+          logChunk(index, false, 'retry fallito');
+        }
+      }
+    });
+  }
+
+  // ── Registrazione ────────────────────────────────────────────
+
+  async function avviaRegistrazione() {
+    const dati = validaForm();
+    if (!dati) return;
+    datiStudente = dati;
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'monitor', frameRate: 10 },
+        audio: false
+      });
+
+      chunkIndex  = 0;
+      chunkSent   = 0;
+      sessionId   = Date.now().toString(36);
+      uploadQueue = Promise.resolve();
+
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8' });
+
+      // Ogni chunk prodotto → accoda upload
+      mediaRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) {
+          accodaChunk(e.data, chunkIndex++);
+        }
+      };
+
+      // Fine registrazione → aspetta coda upload
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        fermaTimer();
+        setStatus('uploading', 'Attendo invio ultimi chunk...');
+        await uploadQueue;
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('progressPct').textContent  = `${chunkSent} / ${chunkIndex} ✓`;
+        setStatus('done', `✓ Completato! ${chunkSent} chunk salvati su Drive.`);
+        document.getElementById('btnStart').disabled = false;
+        document.querySelectorAll('input, select').forEach(el => el.disabled = false);
+      };
+
+      // Se studente clicca "Smetti di condividere" dal browser
+      stream.getVideoTracks()[0].onended = () => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+        document.getElementById('btnStop').disabled = true;
+      };
+
+      mediaRecorder.start(CHUNK_INTERVAL_MS);
+
+      setStatus('rec', '⏺ Registrazione in corso...');
+      avviaTimer();
+
+      document.getElementById('btnStart').disabled = true;
+      document.getElementById('btnStop').disabled  = false;
+      document.querySelectorAll('input, select').forEach(el => el.disabled = true);
+
+    } catch (err) {
+      setStatus('error',
+        err.name === 'NotAllowedError'
+          ? 'Permesso negato — devi condividere lo schermo.'
+          : 'Errore: ' + err.message
+      );
+    }
+  }
+
+  function fermaRegistrazione() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    document.getElementById('btnStop').disabled = true;
+  }
+</script>
+</body>
+</html>
